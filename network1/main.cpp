@@ -44,7 +44,6 @@ struct ethernet_head
 	unsigned char source_mac_add[6]; //源mac地址
 	unsigned short type;              //帧类型
 };
-
 //arp最终包结构
 struct arp_packet
 {
@@ -71,22 +70,15 @@ struct ip_header  //小端模式
 //tcp数据头  
 struct tcp_header //小端模式  
 {
-	u_int16_t   source;
-	u_int16_t   dest;
+	u_short   source;
+	u_short   dest;
 	u_int32_t   seq;
 	u_int32_t   ack_seq;
-	u_int16_t   res1 : 4;
-	u_int16_t   doff : 4;
-	u_int16_t   fin : 1;
-	u_int16_t   syn : 1;
-	u_int16_t   rst : 1;
-	u_int16_t   psh : 1;
-	u_int16_t   ack : 1;
-	u_int16_t   urg : 1;
-	u_int16_t   res2 : 2;
-	u_int16_t   window;
-	u_int16_t   check;
-	u_int16_t   urg_ptr;
+	u_char lenres;
+	u_char flag;
+	u_short   window;
+	u_short   check;
+	u_short   urg_ptr;
 };
 
 //tcp和udp计算校验和是的伪头  
@@ -120,6 +112,65 @@ struct gparam
 bool flag;
 struct sparam sp;
 struct gparam gp;
+
+
+struct EthernetHeader
+{
+	u_char DestMAC[6];
+	u_char SourMAC[6];
+	u_short EthType;
+};
+struct IpHeader
+{
+	unsigned char Version_HLen;
+	unsigned char TOS;
+	short Length;
+	short Ident;
+	short Flags_Offset;
+	unsigned char TTL;
+	unsigned char Protocol;
+	short Checksum;
+	unsigned int SourceAddr;
+	unsigned int DestinationAddr;
+};
+struct PsdTcpHeader
+{
+	unsigned long SourceAddr;
+	unsigned long DestinationAddr;
+	char Zero;
+	char Protcol;
+	unsigned short TcpLen;
+};
+struct TcpHeader
+{
+	unsigned short SrcPort;
+	unsigned short DstPort;
+	unsigned int SequenceNum;
+	unsigned int Acknowledgment;
+	unsigned char HdrLen;
+	unsigned char Flags;
+	unsigned short AdvertisedWindow;
+	unsigned short Checksum;
+	unsigned short UrgPtr;
+};
+unsigned short checksum(unsigned short *data, int length)
+{
+	unsigned long temp = 0;
+	while (length > 1)
+	{
+		temp += *data++;
+		length -= sizeof(unsigned short);
+	}
+	if (length)
+	{
+		temp += *(unsigned short*)data;
+	}
+	temp = (temp >> 16) + (temp & 0xffff);
+	temp += (temp >> 16);
+	return (unsigned short)(~temp);
+}
+
+
 int main()
 {
 	pcap_if_t *alldevs;
@@ -211,6 +262,97 @@ int main()
 	sendthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendArpPacket, &sp, 0, NULL);
 	recvthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)GetLivePC, &gp, 0, NULL);
 	printf("\nlistening on 网卡%d ...\n", inum);
+
+
+	struct EthernetHeader ethernet;
+	struct IpHeader ip;
+	struct TcpHeader tcp;
+	struct PsdTcpHeader ptcp;
+	int Result;
+	unsigned char SendBuffer[200];
+	char TcpData[] = "Tcp Data Test.";
+
+
+	memset(&ethernet, 0, sizeof(ethernet));
+	BYTE destmac[8];
+	destmac[0] = 0x7c;
+	destmac[1] = 0xd1;
+	destmac[2] = 0xc3;
+	destmac[3] = 0x86;
+	destmac[4] = 0xf3;
+	destmac[5] = 0xae;
+	memcpy(ethernet.DestMAC, destmac, 6);
+	BYTE hostmac[8];
+	hostmac[0] = 0x74;
+	hostmac[1] = 0xe5;
+	hostmac[2] = 0x0b;
+	hostmac[3] = 0xf4;
+	hostmac[4] = 0xbd;
+	hostmac[5] = 0x07;
+	memcpy(ethernet.SourMAC, hostmac, 6);
+	ethernet.EthType = htons(0x0800);
+	memcpy(&SendBuffer, &ethernet, sizeof(struct EthernetHeader));
+	ip.Version_HLen = 0x45;
+	ip.TOS = 0;
+	ip.Length = htons(sizeof(struct IpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
+	ip.Ident = htons(1);
+	ip.Flags_Offset = 0;
+	ip.TTL = 128;
+	ip.Protocol = 6;
+	ip.Checksum = 0;
+	ip.SourceAddr = inet_addr("192.168.191.1");
+	ip.DestinationAddr = inet_addr("192.168.191.2");
+	memcpy(&SendBuffer[sizeof(struct EthernetHeader)], &ip, 20);
+	tcp.DstPort = htons(88);
+	tcp.SrcPort = htons(1000);
+	tcp.SequenceNum = htonl(11);
+	tcp.Acknowledgment = 0;
+	tcp.HdrLen = 0x50;
+	tcp.Flags = 0x18;
+	tcp.AdvertisedWindow = htons(512);
+	tcp.UrgPtr = 0;
+	tcp.Checksum = 0;
+	memcpy(&SendBuffer[sizeof(struct EthernetHeader) + 20], &tcp, 20);
+	ptcp.SourceAddr = ip.SourceAddr;
+	ptcp.DestinationAddr = ip.DestinationAddr;
+	ptcp.Zero = 0;
+	ptcp.Protcol = 6;
+	ptcp.TcpLen = htons(sizeof(struct TcpHeader) + strlen(TcpData));
+
+	char TempBuffer[65535];
+	memcpy(TempBuffer, &ptcp, sizeof(struct PsdTcpHeader));
+	memcpy(TempBuffer + sizeof(struct PsdTcpHeader), &tcp, sizeof(struct TcpHeader));
+	memcpy(TempBuffer + sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader), TcpData, strlen(TcpData));
+	tcp.Checksum = checksum((USHORT*)(TempBuffer), sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
+
+	memcpy(SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader), &tcp, sizeof(struct TcpHeader));
+	memcpy(SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader) + sizeof(struct TcpHeader), TcpData, strlen(TcpData));
+	memset(TempBuffer, 0, sizeof(TempBuffer));
+	memcpy(TempBuffer, &ip, sizeof(struct IpHeader));
+	ip.Checksum = checksum((USHORT*)(TempBuffer), sizeof(struct IpHeader));
+	memcpy(SendBuffer + sizeof(struct EthernetHeader), &ip, sizeof(struct IpHeader));
+	Result = pcap_sendpacket(adhandle, SendBuffer, sizeof(struct EthernetHeader) + sizeof(struct IpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
+	if (Result != 0)
+	{
+		printf("Send Error!\n");
+	}
+	else
+	{
+		printf("Send TCP Packet.\n");
+		printf("Dstination Port:%d\n", ntohs(tcp.DstPort));
+		printf("Source Port:%d\n", ntohs(tcp.SrcPort));
+		printf("Sequence:%d\n", ntohl(tcp.SequenceNum));
+		printf("Acknowledgment:%d\n", ntohl(tcp.Acknowledgment));
+		printf("Header Length:%d*4\n", tcp.HdrLen >> 4);
+		printf("Flags:0x%0x\n", tcp.Flags);
+		printf("AdvertiseWindow:%d\n", ntohs(tcp.AdvertisedWindow));
+		printf("UrgPtr:%d\n", ntohs(tcp.UrgPtr));
+		printf("Checksum:%u\n", ntohs(tcp.Checksum));
+	}
+
+
+
+
 	/* 释放设备列表*/
 	pcap_freealldevs(alldevs);
 	getchar();
@@ -277,7 +419,7 @@ char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
 	return address;
 }
 /* 获取自己主机的MAC地址
-		广播一个arp包，如果接收到的包的源ip是自己设定的那个， 那么就是自己的包，那么，从这个包里可以找到自己的mac
+广播一个arp包，如果接收到的包的源ip是自己设定的那个， 那么就是自己的包，那么，从这个包里可以找到自己的mac
 
 */
 int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
@@ -425,10 +567,4 @@ DWORD WINAPI GetLivePC(LPVOID lpParameter)//(pcap_t *adhandle)
 		Sleep(10);
 	}
 	return 0;
-}
-void SendHello(){
-	unsigned char hellopacket[100];
-
-
-
 }
