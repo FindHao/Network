@@ -74,11 +74,11 @@ struct tcp_header //小端模式
 	u_short   dest;
 	u_int32_t   seq;
 	u_int32_t   ack_seq;
-	u_char lenres;
-	u_char flag;
-	u_short   window;
-	u_short   check;
-	u_short   urg_ptr;
+	u_char lenres;//
+	u_char flag;	//
+	u_short   window;//窗口大小
+	u_short   check;	//校验和
+	u_short   urg_ptr;//紧急指针
 };
 
 //tcp和udp计算校验和是的伪头  
@@ -133,6 +133,7 @@ struct IpHeader
 	unsigned int SourceAddr;
 	unsigned int DestinationAddr;
 };
+/**12byte*/
 struct PsdTcpHeader
 {
 	unsigned long SourceAddr;
@@ -143,16 +144,16 @@ struct PsdTcpHeader
 };
 struct TcpHeader
 {
-	unsigned short SrcPort;
-	unsigned short DstPort;
-	unsigned int SequenceNum;
-	unsigned int Acknowledgment;
-	unsigned char HdrLen;
-	unsigned char Flags;
-	unsigned short AdvertisedWindow;
-	unsigned short Checksum;
-	unsigned short UrgPtr;
-};
+	unsigned short SrcPort;	//2byte
+	unsigned short DstPort;	//2byte
+	unsigned int SequenceNum;			//4byte
+	unsigned int Acknowledgment;	//4byte
+	unsigned char HdrLen;			//1byte
+	unsigned char Flags;			//1byte
+	unsigned short AdvertisedWindow;		//2byte
+	unsigned short Checksum;				//2byte
+	unsigned short UrgPtr;						//2byte
+};					//20byte
 unsigned short checksum(unsigned short *data, int length)
 {
 	unsigned long temp = 0;
@@ -270,7 +271,7 @@ int main()
 	struct PsdTcpHeader ptcp;
 	int Result;
 	unsigned char SendBuffer[200];
-	char TcpData[] = "Tcp Data Test.";
+	char TcpData[] = "Hello,this is Find";
 
 
 	memset(&ethernet, 0, sizeof(ethernet));

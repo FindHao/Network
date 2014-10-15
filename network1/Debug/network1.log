@@ -1,9 +1,10 @@
-﻿生成启动时间为 2014/10/15 星期三 20:19:58。
+﻿生成启动时间为 2014/10/15 星期三 22:20:57。
      1>项目“E:\Yun\Dropbox\cppcode\network1\network1\network1.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
          E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D HAVE_REMOTE /D WPCAP /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
          main.cpp
-     1>e:\yun\dropbox\cppcode\network1\network1\main.cpp(366): warning C4101: “ip6str”: 未引用的局部变量
+     1>e:\yun\dropbox\cppcode\network1\network1\main.cpp(367): warning C4101: “ip6str”: 未引用的局部变量
+     1>cl : 命令行 warning D9028: 最小重新生成失败，正在转换为标准生成
        Link:
          E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.exe" /INCREMENTAL /NOLOGO wpcap.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.lib" /MACHINE:X86 Debug\main.obj
          network1.vcxproj -> E:\Yun\Dropbox\cppcode\network1\Debug\network1.exe
@@ -11,4 +12,4 @@
 
 生成成功。
 
-已用时间 00:00:01.24
+已用时间 00:00:01.61
