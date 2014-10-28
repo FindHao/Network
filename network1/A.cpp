@@ -337,7 +337,7 @@ void sendHello() {
 	destmac[2] = 0x0b;
 	destmac[3] = 0xf4;
 	destmac[4] = 0xbd;
-	destmac[5] = 0x07;
+	destmac[5] = 0x06;
 //	for (int i = 0; i < 6; i++) {
 //		destmac[i] = Machines[sendIndex].Mac[i];
 //	}
@@ -368,7 +368,7 @@ void sendHello() {
 	ip.TTL = 128;
 	ip.Protocol = 6;
 	ip.Checksum = 0;
-	ip.SourceAddr = inet_addr("192.168.191.1");
+	ip.SourceAddr = inet_addr("191.168.1.103");
 
 //	ip.DestinationAddr=inet_addr()
 	ip.DestinationAddr = inet_addr("192.168.191.1");
