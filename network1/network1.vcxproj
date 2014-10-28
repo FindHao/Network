@@ -14,7 +14,7 @@
     <ClInclude Include="tcp.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="B.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E9DAE9C0-8DA8-4CEE-8403-B7F8A9B8621C}</ProjectGuid>

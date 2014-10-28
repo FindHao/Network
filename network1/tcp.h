@@ -1,5 +1,5 @@
 #include <WinSock2.h>
-/* 4×Ö½ÚµÄIPµØÖ· */
+/* 4å­—èŠ‚çš„IPåœ°å€ */
 typedef struct ip_address
 {
 	u_char byte1;
@@ -8,7 +8,7 @@ typedef struct ip_address
 	u_char byte4;
 } ip_address;
 
-/* IPv4 Ê×²¿ */
+/* IPv4 é¦–éƒ¨ */
 
 typedef struct header_tcp
 {
@@ -23,15 +23,15 @@ typedef struct header_tcp
 }tcp_header;
 typedef struct ip_header
 {
-	u_char ver_ihl; // °æ±¾ (4 bits) + Ê×²¿³¤¶È (4 bits)		1byte
-	u_char tos; // ·şÎñÀàĞÍ(Type of service)					1byte
-	u_short tlen; // ×Ü³¤(Total length)							2byte
-	u_short identification; // ±êÊ¶(Identification)			2byte
-	u_short flags_fo; // ±êÖ¾Î»(Flags) (3 bits) + ¶ÎÆ«ÒÆÁ¿(Fragment offset) (13 bits)	2byte
-	u_char ttl; // ´æ»îÊ±¼ä(Time to live)						1byte
-	u_char proto; // Ğ­Òé(Protocol)								1byte
-	u_short crc; // Ê×²¿Ğ£ÑéºÍ(Header checksum)			2byte
-	ip_address saddr; // Ô´µØÖ·(Source address)				4byte
-	ip_address daddr; // Ä¿µÄµØÖ·(Destination address)	4byte
-	u_int op_pad; // Ñ¡ÏîÓëÌî³ä(Option + Padding)			4byte+
+	u_char ver_ihl; // ç‰ˆæœ¬ (4 bits) + é¦–éƒ¨é•¿åº¦ (4 bits)		1byte
+	u_char tos; // æœåŠ¡ç±»å‹(Type of service)					1byte
+	u_short tlen; // æ€»é•¿(Total length)							2byte
+	u_short identification; // æ ‡è¯†(Identification)			2byte
+	u_short flags_fo; // æ ‡å¿—ä½(Flags) (3 bits) + æ®µåç§»é‡(Fragment offset) (13 bits)	2byte
+	u_char ttl; // å­˜æ´»æ—¶é—´(Time to live)						1byte
+	u_char proto; // åè®®(Protocol)								1byte
+	u_short crc; // é¦–éƒ¨æ ¡éªŒå’Œ(Header checksum)			2byte
+	ip_address saddr; // æºåœ°å€(Source address)				4byte
+	ip_address daddr; // ç›®çš„åœ°å€(Destination address)	4byte
+//	u_int op_pad; // é€‰é¡¹ä¸å¡«å……(Option + Padding)			4byte+
 } ip_header;															//24byte+

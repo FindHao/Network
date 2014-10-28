@@ -1,9 +1,10 @@
 #define  _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <cstring>
 #include "pcap.h"
 #include "Packet32.h"
-
+#include "tcp.h"
 #pragma pack(1)  //按一个字节内存对齐
 #define IPTOSBUFFERS    12
 #define ETH_ARP         0x0806  //以太网帧类型表示后面数据的类型，对于ARP请求或应答来说，该字段的值为x0806
@@ -13,7 +14,8 @@
 #define ARP_REPLY       2
 #define HOSTNUM         255
 /* packet handler 函数原型*/
-void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
+void packet_handler(u_char *param, const struct pcap_pkthdr *header,
+		const u_char *pkt_data);
 // 函数原型
 void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask);
 char *iptos(u_long in);
@@ -22,10 +24,11 @@ int SendArp(pcap_t *adhandle, char *ip, unsigned char *mac);
 int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac);
 DWORD WINAPI SendArpPacket(LPVOID lpParameter);
 DWORD WINAPI GetLivePC(LPVOID lpParameter);
+void sendHello();
+void receiveMessage();
 
 //28字节ARP帧结构
-struct arp_head
-{
+struct arp_head {
 	unsigned short hardware_type;    //硬件类型
 	unsigned short protocol_type;    //协议类型
 	unsigned char hardware_add_len; //硬件地址长度
@@ -38,90 +41,82 @@ struct arp_head
 };
 
 //14字节以太网帧结构
-struct ethernet_head
-{
+struct ethernet_head {
 	unsigned char dest_mac_add[6];    //目的mac地址
 	unsigned char source_mac_add[6]; //源mac地址
 	unsigned short type;              //帧类型
 };
 //arp最终包结构
-struct arp_packet
-{
+struct arp_packet {
 	struct ethernet_head ed;
 	struct arp_head ah;
 };
 
-//IP数据头  
-struct ip_header  //小端模式  
+//IP数据头
+struct ip_headerForSend  //小端模式
 {
-	unsigned   char     ihl : 4;              //ip   header   length      
-	unsigned   char     version : 4;          //version     
-	u_char              tos;                //type   of   service     
-	u_short             tot_len;            //total   length     
-	u_short             id;                 //identification     
-	u_short             frag_off;           //fragment   offset     
-	u_char              ttl;                //time   to   live     
-	u_char              protocol;           //protocol   type     
-	u_short             check;              //check   sum     
-	u_int               saddr;              //source   address     
-	u_int               daddr;              //destination   address     
+	unsigned char ihl :4;              //ip   header   length
+	unsigned char version :4;          //version
+	u_char tos;                //type   of   service
+	u_short tot_len;            //total   length
+	u_short id;                 //identification
+	u_short frag_off;           //fragment   offset
+	u_char ttl;                //time   to   live
+	u_char protocol;           //protocol   type
+	u_short check;              //check   sum
+	u_int saddr;              //source   address
+	u_int daddr;              //destination   address
 };
 
-//tcp数据头  
-struct tcp_header //小端模式  
+//tcp数据头
+struct tcp_headerForSend //小端模式
 {
-	u_short   source;
-	u_short   dest;
-	u_int32_t   seq;
-	u_int32_t   ack_seq;
-	u_char lenres;//
+	u_short source;
+	u_short dest;
+	u_int32_t seq;
+	u_int32_t ack_seq;
+	u_char lenres; //
 	u_char flag;	//
-	u_short   window;//窗口大小
-	u_short   check;	//校验和
-	u_short   urg_ptr;//紧急指针
+	u_short window;	//窗口大小
+	u_short check;	//校验和
+	u_short urg_ptr;	//紧急指针
 };
 
-//tcp和udp计算校验和是的伪头  
+//tcp和udp计算校验和是的伪头
 struct psd_header {
-	u_int32_t   sourceip;       //源IP地址  
-	u_int32_t   destip;         //目的IP地址  
-	u_char      mbz;            //置空(0)  
-	u_char      ptcl;           //协议类型  
-	u_int16_t   plen;           //TCP/UDP数据包的长度(即从TCP/UDP报头算起到数据包结束的长度 单位:字节)  
+	u_int32_t sourceip;       //源IP地址
+	u_int32_t destip;         //目的IP地址
+	u_char mbz;            //置空(0)
+	u_char ptcl;           //协议类型
+	u_int16_t plen;           //TCP/UDP数据包的长度(即从TCP/UDP报头算起到数据包结束的长度 单位:字节)
 };
 
 /**以太网数据头 |  IP数据头 | TCP数据头 | 数据*/
-struct ethernet_packet{
+struct ethernet_packet {
 	struct ethernet_head eh;
-	struct ip_header iph;
-	struct tcp_header tcph;
+	struct ip_headerForSend iph;
+	struct tcp_headerForSend tcph;
 };
 
-
-struct sparam
-{
+struct sparam {
 	pcap_t *adhandle;
 	char *ip;
 	unsigned char *mac;
 	char *netmask;
 };
-struct gparam
-{
+struct gparam {
 	pcap_t *adhandle;
 };
 bool flag;
 struct sparam sp;
 struct gparam gp;
 
-
-struct EthernetHeader
-{
+struct EthernetHeader {
 	u_char DestMAC[6];
 	u_char SourMAC[6];
 	u_short EthType;
 };
-struct IpHeader
-{
+struct IpHeader {
 	unsigned char Version_HLen;
 	unsigned char TOS;
 	short Length;
@@ -134,16 +129,14 @@ struct IpHeader
 	unsigned int DestinationAddr;
 };
 /**12byte*/
-struct PsdTcpHeader
-{
+struct PsdTcpHeader {
 	unsigned long SourceAddr;
 	unsigned long DestinationAddr;
 	char Zero;
 	char Protcol;
 	unsigned short TcpLen;
 };
-struct TcpHeader
-{
+struct TcpHeader {
 	unsigned short SrcPort;	//2byte
 	unsigned short DstPort;	//2byte
 	unsigned int SequenceNum;			//4byte
@@ -153,83 +146,102 @@ struct TcpHeader
 	unsigned short AdvertisedWindow;		//2byte
 	unsigned short Checksum;				//2byte
 	unsigned short UrgPtr;						//2byte
-};					//20byte
-unsigned short checksum(unsigned short *data, int length)
-{
+};
+//20byte
+unsigned short checksum(unsigned short *data, int length) {
 	unsigned long temp = 0;
-	while (length > 1)
-	{
+	while (length > 1) {
 		temp += *data++;
 		length -= sizeof(unsigned short);
 	}
-	if (length)
-	{
-		temp += *(unsigned short*)data;
+	if (length) {
+		temp += *(unsigned short*) data;
 	}
 	temp = (temp >> 16) + (temp & 0xffff);
 	temp += (temp >> 16);
-	return (unsigned short)(~temp);
+	return (unsigned short) (~temp);
 }
 
+/**记录扫描到的MAC和IP对应的信息*/
+struct MacMapIP {
+	unsigned char Mac[6];
+	unsigned long IP[4];
+} Machines[256];
+/**来记录是否是已经扫描完成了*/
+boolean scanFinished = false;
+/**发送的机器在Map表里对应的序号*/
+int sendIndex;
+/**机器本身的MAC*/
+unsigned char selfMAC[6];
+int countMachine = 0;
+ethernet_head * rec_eth_head;
+//发送时的数据修改
+char * sourIP;
+char * destIP;
 
-int main()
-{
-	pcap_if_t *alldevs;
-	pcap_if_t *d;
-	int inum;
-	int i = 0;
-	pcap_t *adhandle;
-	char errbuf[PCAP_ERRBUF_SIZE];
-	char *ip_addr;
-	char *ip_netmask;
-	unsigned char *ip_mac;
-	HANDLE sendthread;
-	HANDLE recvthread;
+struct EthernetHeader ethernet;
+struct IpHeader ip;
+struct TcpHeader tcp;
+struct PsdTcpHeader ptcp;
+int Result;
+unsigned char SendBuffer[200];
+unsigned char *SendBuffer2;
+char TcpData[] = "Hello,this is Find";
 
-	ip_addr = (char *)malloc(sizeof(char) * 16);//申请内存存放IP地址
-	if (ip_addr == NULL)
-	{
+pcap_t *adhandle;
+
+pcap_if_t *alldevs;
+pcap_if_t *d;
+int inum;
+int i = 0;
+char errbuf[PCAP_ERRBUF_SIZE];
+u_int netmask;
+char packet_filter[] = "tcp and (src host 211.87.237.200)"; //自己定义ip地址即可
+struct bpf_program fcode;
+char *ip_addr;
+char *ip_netmask;
+unsigned char *ip_mac;
+HANDLE sendthread;
+HANDLE recvthread;
+int main() {
+
+	ip_addr = (char *) malloc(sizeof(char) * 16); //申请内存存放IP地址
+	if (ip_addr == NULL) {
 		printf("申请内存存放IP地址失败!\n");
 		return -1;
 	}
-	ip_netmask = (char *)malloc(sizeof(char) * 16);//申请内存存放NETMASK地址
-	if (ip_netmask == NULL)
-	{
+	ip_netmask = (char *) malloc(sizeof(char) * 16); //申请内存存放NETMASK地址
+	if (ip_netmask == NULL) {
 		printf("申请内存存放NETMASK地址失败!\n");
 		return -1;
 	}
-	ip_mac = (unsigned char *)malloc(sizeof(unsigned char) * 6);//申请内存存放MAC地址
-	if (ip_mac == NULL)
-	{
+	ip_mac = (unsigned char *) malloc(sizeof(unsigned char) * 6); //申请内存存放MAC地址
+	if (ip_mac == NULL) {
 		printf("申请内存存放MAC地址失败!\n");
 		return -1;
 	}
 	/* 获取本机设备列表*/
-	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
-	{
+	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1) {
 		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
 		exit(1);
 	}
 	/* 打印列表*/
 	printf("[本机网卡列表：]\n");
-	for (d = alldevs; d; d = d->next)
-	{
+	for (d = alldevs; d; d = d->next) {
 		printf("%d) %s\n", ++i, d->name);
 		if (d->description)
 			printf(" (%s)\n", d->description);
 		else
 			printf(" (No description available)\n");
 	}
-	if (i == 0)
-	{
+	if (i == 0) {
 		printf("\n找不到网卡！请确认是否已安装WinPcap.\n");
 		return -1;
 	}
 	printf("\n");
 	printf("请选择要打开的网卡号(1-%d):", i);
 	scanf("%d", &inum);
-	if (inum < 1 || inum > i)
-	{
+	if (inum < 1 || inum > i) {
 		printf("\n该网卡号超过现有网卡数!请按任意键退出…\n");
 		getchar();
 		getchar();
@@ -238,107 +250,55 @@ int main()
 		return -1;
 	}
 	/* 跳转到选中的适配器*/
-	for (d = alldevs, i = 0; i< inum - 1; d = d->next, i++);
+	for (d = alldevs, i = 0; i < inum - 1; d = d->next, i++)
+		;
 	/* 打开设备*/
 	if ((adhandle = pcap_open(d->name,          // 设备名
-		65536,            // 65535保证能捕获到不同数据链路层上的每个数据包的全部内容
-		PCAP_OPENFLAG_PROMISCUOUS,    // 混杂模式
-		1000,             // 读取超时时间
-		NULL,             // 远程机器验证
-		errbuf            // 错误缓冲池
-		)) == NULL)
-	{
+			65536,            // 65535保证能捕获到不同数据链路层上的每个数据包的全部内容
+			PCAP_OPENFLAG_PROMISCUOUS,    // 混杂模式
+			1000,             // 读取超时时间
+			NULL,             // 远程机器验证
+			errbuf            // 错误缓冲池
+			)) == NULL) {
 		fprintf(stderr, "\n无法读取该适配器. 适配器%s 不被WinPcap支持\n", d->name);
 		/* 释放设备列表*/
 		pcap_freealldevs(alldevs);
 		return -1;
 	}
-	ifget(d, ip_addr, ip_netmask);//获取所选网卡的基本信息--掩码--IP地址
-	GetSelfMac(adhandle, ip_addr, ip_mac);//输入网卡设备句柄网卡设备ip地址获取该设备的MAC地址
+	ifget(d, ip_addr, ip_netmask);            //获取所选网卡的基本信息--掩码--IP地址
+	GetSelfMac(adhandle, ip_addr, ip_mac);         //输入网卡设备句柄网卡设备ip地址获取该设备的MAC地址
 	sp.adhandle = adhandle;
 	sp.ip = ip_addr;
 	sp.mac = ip_mac;
 	sp.netmask = ip_netmask;
 	gp.adhandle = adhandle;
-	sendthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendArpPacket, &sp, 0, NULL);
-	recvthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)GetLivePC, &gp, 0, NULL);
+//	sendthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) SendArpPacket,
+//			&sp, 0, NULL);
+//	recvthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) GetLivePC, &gp,
+//			0, NULL);
 	printf("\nlistening on 网卡%d ...\n", inum);
 
-
-	struct EthernetHeader ethernet;
-	struct IpHeader ip;
-	struct TcpHeader tcp;
-	struct PsdTcpHeader ptcp;
-	int Result;
-	unsigned char SendBuffer[200];
-	char TcpData[] = "Hello,this is Find";
+//	while (!scanFinished) {
+//		Sleep(1000);
+//	}
 
 
-	memset(&ethernet, 0, sizeof(ethernet));
-	BYTE destmac[8];
-	destmac[0] = 0x7c;
-	destmac[1] = 0xd1;
-	destmac[2] = 0xc3;
-	destmac[3] = 0x86;
-	destmac[4] = 0xf3;
-	destmac[5] = 0xae;
-	memcpy(ethernet.DestMAC, destmac, 6);
-	BYTE hostmac[8];
-	hostmac[0] = 0x74;
-	hostmac[1] = 0xe5;
-	hostmac[2] = 0x0b;
-	hostmac[3] = 0xf4;
-	hostmac[4] = 0xbd;
-	hostmac[5] = 0x07;
-	memcpy(ethernet.SourMAC, hostmac, 6);
-	ethernet.EthType = htons(0x0800);
-	memcpy(&SendBuffer, &ethernet, sizeof(struct EthernetHeader));
-	ip.Version_HLen = 0x45;
-	ip.TOS = 0;
-	ip.Length = htons(sizeof(struct IpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
-	ip.Ident = htons(1);
-	ip.Flags_Offset = 0;
-	ip.TTL = 128;
-	ip.Protocol = 6;
-	ip.Checksum = 0;
-	ip.SourceAddr = inet_addr("192.168.191.1");
-	ip.DestinationAddr = inet_addr("192.168.191.2");
-	memcpy(&SendBuffer[sizeof(struct EthernetHeader)], &ip, 20);
-	tcp.DstPort = htons(88);
-	tcp.SrcPort = htons(1000);
-	tcp.SequenceNum = htonl(11);
-	tcp.Acknowledgment = 0;
-	tcp.HdrLen = 0x50;
-	tcp.Flags = 0x18;
-	tcp.AdvertisedWindow = htons(512);
-	tcp.UrgPtr = 0;
-	tcp.Checksum = 0;
-	memcpy(&SendBuffer[sizeof(struct EthernetHeader) + 20], &tcp, 20);
-	ptcp.SourceAddr = ip.SourceAddr;
-	ptcp.DestinationAddr = ip.DestinationAddr;
-	ptcp.Zero = 0;
-	ptcp.Protcol = 6;
-	ptcp.TcpLen = htons(sizeof(struct TcpHeader) + strlen(TcpData));
+	getchar();
 
-	char TempBuffer[65535];
-	memcpy(TempBuffer, &ptcp, sizeof(struct PsdTcpHeader));
-	memcpy(TempBuffer + sizeof(struct PsdTcpHeader), &tcp, sizeof(struct TcpHeader));
-	memcpy(TempBuffer + sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader), TcpData, strlen(TcpData));
-	tcp.Checksum = checksum((USHORT*)(TempBuffer), sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
+	scanf("输入您要发送信息的序号:%d\n", &sendIndex);
 
-	memcpy(SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader), &tcp, sizeof(struct TcpHeader));
-	memcpy(SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader) + sizeof(struct TcpHeader), TcpData, strlen(TcpData));
-	memset(TempBuffer, 0, sizeof(TempBuffer));
-	memcpy(TempBuffer, &ip, sizeof(struct IpHeader));
-	ip.Checksum = checksum((USHORT*)(TempBuffer), sizeof(struct IpHeader));
-	memcpy(SendBuffer + sizeof(struct EthernetHeader), &ip, sizeof(struct IpHeader));
-	Result = pcap_sendpacket(adhandle, SendBuffer, sizeof(struct EthernetHeader) + sizeof(struct IpHeader) + sizeof(struct TcpHeader) + strlen(TcpData));
-	if (Result != 0)
-	{
+	sendHello();
+
+	Result = pcap_sendpacket(adhandle, SendBuffer,
+			sizeof(struct EthernetHeader) + sizeof(struct IpHeader)
+					+ sizeof(struct TcpHeader) + strlen(TcpData));
+	printf("The length is %d\n",
+			sizeof(struct EthernetHeader) + sizeof(struct IpHeader)
+					+ sizeof(struct TcpHeader) + strlen(TcpData));
+	if (Result != 0) {
 		printf("Send Error!\n");
-	}
-	else
-	{
+		return -1;
+	} else {
 		printf("Send TCP Packet.\n");
 		printf("Dstination Port:%d\n", ntohs(tcp.DstPort));
 		printf("Source Port:%d\n", ntohs(tcp.SrcPort));
@@ -349,11 +309,48 @@ int main()
 		printf("AdvertiseWindow:%d\n", ntohs(tcp.AdvertisedWindow));
 		printf("UrgPtr:%d\n", ntohs(tcp.UrgPtr));
 		printf("Checksum:%u\n", ntohs(tcp.Checksum));
+
+
 	}
+	/* 检查数据链路层，为了简单，我们只考虑以太网 */
+			if (pcap_datalink(adhandle) != DLT_EN10MB) {
+				fprintf(stderr,
+						"\nThis program works only on Ethernet networks.\n");
+				/* 释放设备列表 */
+				pcap_freealldevs(alldevs);
+				return -1;
+			}
+			printf("datalink:[%d]\n", pcap_datalink(adhandle));
+			if (d->addresses != NULL)
+				/* 获得接口第一个地址的掩码 */
+				netmask =
+						((struct sockaddr_in *) (d->addresses->netmask))->sin_addr.S_un.S_addr;
+			else
+				/* 如果接口没有地址，那么我们假设一个C类的掩码 */
+				netmask = 0xffffff;
 
+			//编译过滤器
+			if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) < 0) {
+				fprintf(stderr,
+						"\nUnable to compile the packet filter. Check the syntax.\n");
+				/* 释放设备列表 */
+				pcap_freealldevs(alldevs);
+				int x;
+				scanf("%d", &x);
+				return -1;
+			}
 
+			//设置过滤器
+			if (pcap_setfilter(adhandle, &fcode) < 0) {
+				fprintf(stderr, "\nError setting the filter.\n");
+				/* 释放设备列表 */
+				pcap_freealldevs(alldevs);
+				return -1;
+			}
 
-
+			printf("nlistening on %s...\n", d->description);
+			Sleep(500);
+			receiveMessage();
 	/* 释放设备列表*/
 	pcap_freealldevs(alldevs);
 	getchar();
@@ -361,26 +358,23 @@ int main()
 	return 0;
 }
 /* 获取可用信息*/
-void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask)
-{
+void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask) {
 	pcap_addr_t *a;
 	char ip6str[128];
 	/* IP addresses */
-	for (a = d->addresses; a; a = a->next)
-	{
-		switch (a->addr->sa_family)
-		{
+	for (a = d->addresses; a; a = a->next) {
+		switch (a->addr->sa_family) {
 		case AF_INET:
-			if (a->addr)
-			{
+			if (a->addr) {
 				char *ipstr;
-				ipstr = iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr);//*ip_addr
+				ipstr = iptos(
+						((struct sockaddr_in *) a->addr)->sin_addr.s_addr); //*ip_addr
 				memcpy(ip_addr, ipstr, 16);
 			}
-			if (a->netmask)
-			{
+			if (a->netmask) {
 				char *netmaskstr;
-				netmaskstr = iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr);
+				netmaskstr = iptos(
+						((struct sockaddr_in *) a->netmask)->sin_addr.s_addr);
 
 				memcpy(ip_netmask, netmaskstr, 16);
 			}
@@ -390,19 +384,115 @@ void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask)
 	}
 }
 
+void sendHello() {
+
+	memset(&ethernet, 0, sizeof(ethernet));
+	BYTE destmac[8];
+	destmac[0] = 0x7c;
+	destmac[1] = 0xd1;
+	destmac[2] = 0xc3;
+	destmac[3] = 0x86;
+	destmac[4] = 0xf3;
+	destmac[5] = 0xae;
+//	for (int i = 0; i < 6; i++) {
+//		destmac[i] = Machines[sendIndex].Mac[i];
+//	}
+	printf("sendindex%d\n",sendIndex);
+	memcpy(ethernet.DestMAC, destmac, 6);
+	BYTE hostmac[8];
+	for (int i = 0; i < 6; i++) {
+		hostmac[i] = selfMAC[i];
+	}
+
+//	hostmac[0] = 0x74;
+//	hostmac[1] = 0xe5;
+//	hostmac[2] = 0x0b;
+//	hostmac[3] = 0xf4;
+//	hostmac[4] = 0xbd;
+//	hostmac[5] = 0x07;
+	memcpy(ethernet.SourMAC, hostmac, 6);
+	ethernet.EthType = htons(0x0800);
+	//加入以太网帧头
+	memcpy(&SendBuffer, &ethernet, sizeof(struct EthernetHeader));
+	ip.Version_HLen = 0x45;
+	ip.TOS = 0;
+	ip.Length = htons(
+			sizeof(struct IpHeader) + sizeof(struct TcpHeader)
+					+ strlen(TcpData));
+	ip.Ident = htons(1);
+	ip.Flags_Offset = 0;
+	ip.TTL = 128;
+	ip.Protocol = 6;
+	ip.Checksum = 0;
+	ip.SourceAddr = inet_addr("211.87.237.201");
+	//char * temp1;
+	//temp1=(char*)malloc(sizeof(char*)*20);
+//	string iptemp;
+//	for(int i=0;i<3;i++){
+//		iptemp+=Machines[sendIndex].IP[i]+".";
+////		printf("hehehehe%u",Machines[sendIndex].IP[i]);
+//
+//	}
+//	iptemp+=Machines[sendIndex].IP[i];
+//	strcat(temp1,Machines[sendIndex].IP[i]+"");
+//	printf("temp1 ********%s\n",iptemp);
+//	ip.DestinationAddr=inet_addr(iptemp);
+	ip.DestinationAddr = inet_addr("211.87.237.200");
+	//加入ip头
+	memcpy(&SendBuffer[sizeof(struct EthernetHeader)], &ip, 20);
+	tcp.DstPort = htons(88);
+	tcp.SrcPort = htons(1000);
+	tcp.SequenceNum = htonl(11);
+	tcp.Acknowledgment = 0;
+	tcp.HdrLen = 0x50;
+	tcp.Flags = 0x18;
+	tcp.AdvertisedWindow = htons(512);
+	tcp.UrgPtr = 0;
+	tcp.Checksum = 0;
+//加入tcp头
+	memcpy(&SendBuffer[sizeof(struct EthernetHeader) + 20], &tcp, 20);
+	ptcp.SourceAddr = ip.SourceAddr;
+	ptcp.DestinationAddr = ip.DestinationAddr;
+	ptcp.Zero = 0;
+	ptcp.Protcol = 6;
+	ptcp.TcpLen = htons(sizeof(struct TcpHeader) + strlen(TcpData));
+
+	char TempBuffer[65535];
+	memcpy(TempBuffer, &ptcp, sizeof(struct PsdTcpHeader));
+	memcpy(TempBuffer + sizeof(struct PsdTcpHeader), &tcp,
+			sizeof(struct TcpHeader));
+	memcpy(TempBuffer + sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader),
+			TcpData, strlen(TcpData));
+	tcp.Checksum = checksum((USHORT*) (TempBuffer),
+			sizeof(struct PsdTcpHeader) + sizeof(struct TcpHeader)
+					+ strlen(TcpData));
+	//重新校验
+	memcpy(SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader),
+			&tcp, sizeof(struct TcpHeader));
+	memcpy(
+			SendBuffer + sizeof(struct EthernetHeader) + sizeof(struct IpHeader)
+					+ sizeof(struct TcpHeader), TcpData, strlen(TcpData));
+	memset(TempBuffer, 0, sizeof(TempBuffer));
+	memcpy(TempBuffer, &ip, sizeof(struct IpHeader));
+	ip.Checksum = checksum((USHORT*) (TempBuffer), sizeof(struct IpHeader));
+	memcpy(SendBuffer + sizeof(struct EthernetHeader), &ip,
+			sizeof(struct IpHeader));
+//	int ss = sizeof(struct EthernetHeader) + sizeof(struct IpHeader) + sizeof(struct TcpHeader) + strlen(TcpData);
+//	SendBuffer2 =(unsigned char *) malloc(sizeof(unsigned char *)*ss);
+//	memcpy(SendBuffer2,SendBuffer,ss);
+}
+
 /* 将数字类型的IP地址转换成字符串类型的*/
-char *iptos(u_long in)
-{
+char *iptos(u_long in) {
 	static char output[IPTOSBUFFERS][3 * 4 + 3 + 1];
 	static short which;
 	u_char *p;
-	p = (u_char *)&in;
+	p = (u_char *) &in;
 	which = (which + 1 == IPTOSBUFFERS ? 0 : which + 1);
 	sprintf(output[which], "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 	return output[which];
 }
-char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
-{
+char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen) {
 	socklen_t sockaddrlen;
 #ifdef WIN32
 	sockaddrlen = sizeof(struct sockaddr_in6);
@@ -410,29 +500,24 @@ char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
 	sockaddrlen = sizeof(struct sockaddr_storage);
 #endif
 
-	if (getnameinfo(sockaddr,
-		sockaddrlen,
-		address,
-		addrlen,
-		NULL,
-		0,
-		NI_NUMERICHOST) != 0) address = NULL;
+	if (getnameinfo(sockaddr, sockaddrlen, address, addrlen,
+	NULL, 0, NI_NUMERICHOST) != 0)
+		address = NULL;
 	return address;
 }
 /* 获取自己主机的MAC地址
-广播一个arp包，如果接收到的包的源ip是自己设定的那个， 那么就是自己的包，那么，从这个包里可以找到自己的mac
+ 广播一个arp包，如果接收到的包的源ip是自己设定的那个， 那么就是自己的包，那么，从这个包里可以找到自己的mac
 
-*/
-int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
-{
-	unsigned char sendbuf[42];//arp包结构大小
+ */
+int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac) {
+	unsigned char sendbuf[42];            //arp包结构大小
 	int i = -1;
 	int res;
 	struct ethernet_head eh;
 	struct arp_head ah;
 	struct pcap_pkthdr * pkt_header;
 	const u_char * pkt_data;
-	memset(eh.dest_mac_add, 0xff, 6);//目的地址为全为广播地址
+	memset(eh.dest_mac_add, 0xff, 6);            //目的地址为全为广播地址
 	memset(eh.source_mac_add, 0x0f, 6);
 	memset(ah.source_mac_add, 0x0f, 6);
 	memset(ah.dest_mac_add, 0x00, 6);
@@ -445,58 +530,51 @@ int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
 	ah.operation_field = htons(ARP_REQUEST);
 	ah.dest_ip_add = inet_addr(ip_addr);
 
-
 	memset(sendbuf, 0, sizeof(sendbuf));
 	memcpy(sendbuf, &eh, sizeof(eh));
 	memcpy(sendbuf + sizeof(eh), &ah, sizeof(ah));
-	if (pcap_sendpacket(adhandle, sendbuf, 42) == 0)
-	{
+	if (pcap_sendpacket(adhandle, sendbuf, 42) == 0) {
 		printf("\nPacketSend succeed\n");
-	}
-	else
-	{
+	} else {
 		printf("PacketSendPacket in getmine Error: %d\n", GetLastError());
 		return 0;
 	}
-	while ((res = pcap_next_ex(adhandle, &pkt_header, &pkt_data)) >= 0)
-	{
-		if (*(unsigned short *)(pkt_data + 12) == htons(ETH_ARP) &&
-			*(unsigned short*)(pkt_data + 20) == htons(ARP_REPLY) &&
-			*(unsigned long*)(pkt_data + 38) == inet_addr("100.100.100.100"))
-		{
-			for (i = 0; i<6; i++)
-			{
-				ip_mac[i] = *(unsigned char *)(pkt_data + 22 + i);
+	while ((res = pcap_next_ex(adhandle, &pkt_header, &pkt_data)) >= 0) {
+		if (*(unsigned short *) (pkt_data + 12) == htons(ETH_ARP)
+				&& *(unsigned short*) (pkt_data + 20) == htons(ARP_REPLY)
+				&& *(unsigned long*) (pkt_data + 38)
+						== inet_addr("100.100.100.100")) {
+			for (i = 0; i < 6; i++) {
+				ip_mac[i] = *(unsigned char *) (pkt_data + 22 + i);
+				selfMAC[i] = ip_mac[i];
 			}
 			printf("获取自己主机的MAC地址成功!\n");
 			break;
 		}
 	}
-	if (i == 6)
-	{
+	if (i == 6) {
 		return 1;
-	}
-	else
-	{
+	} else {
 		return 0;
 	}
 }
 /* 向局域网内所有可能的IP地址发送ARP请求包线程 */
-DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsigned char *mac,char *netmask)
-{
-	sparam *spara = (sparam *)lpParameter;
+DWORD WINAPI SendArpPacket(LPVOID lpParameter) //(pcap_t *adhandle,char *ip,unsigned char *mac,char *netmask)
+		{
+	sparam *spara = (sparam *) lpParameter;
 	pcap_t *adhandle = spara->adhandle;
 	char *ip = spara->ip;
 	unsigned char *mac = spara->mac;
 	char *netmask = spara->netmask;
-	printf("ip_mac:%02x-%02x-%02x-%02x-%02x-%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	printf("ip_mac:%02x-%02x-%02x-%02x-%02x-%02x\n", mac[0], mac[1], mac[2],
+			mac[3], mac[4], mac[5]);
 	printf("自身的IP地址为:%s\n", ip);
 	printf("地址掩码NETMASK为:%s\n", netmask);
 	printf("\n");
-	unsigned char sendbuf[42];//arp包结构大小
+	unsigned char sendbuf[42]; //arp包结构大小
 	struct ethernet_head eh;
 	struct arp_head ah;
-	memset(eh.dest_mac_add, 0xff, 6);//目的地址为全为广播地址
+	memset(eh.dest_mac_add, 0xff, 6); //目的地址为全为广播地址
 	memcpy(eh.source_mac_add, mac, 6);
 	memcpy(ah.source_mac_add, mac, 6);
 	memset(ah.dest_mac_add, 0x00, 6);
@@ -510,19 +588,15 @@ DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsig
 	//向局域网内广播发送arp包
 	unsigned long myip = inet_addr(ip);
 	unsigned long mynetmask = inet_addr(netmask);
-	unsigned long hisip = htonl((myip&mynetmask));
-	for (int i = 0; i<HOSTNUM; i++)
-	{
+	unsigned long hisip = htonl((myip & mynetmask));
+	for (int i = 0; i < HOSTNUM; i++) {
 		ah.dest_ip_add = htonl(hisip + i);
 		memset(sendbuf, 0, sizeof(sendbuf));
 		memcpy(sendbuf, &eh, sizeof(eh));
 		memcpy(sendbuf + sizeof(eh), &ah, sizeof(ah));
-		if (pcap_sendpacket(adhandle, sendbuf, 42) == 0)
-		{
+		if (pcap_sendpacket(adhandle, sendbuf, 42) == 0) {
 			//printf("\nPacketSend succeed\n");
-		}
-		else
-		{
+		} else {
 			printf("PacketSendPacket in getmine Error: %d\n", GetLastError());
 		}
 		Sleep(50);
@@ -532,40 +606,98 @@ DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsig
 	return 0;
 }
 /* 分析截留的数据包获取活动的主机IP地址 */
-DWORD WINAPI GetLivePC(LPVOID lpParameter)//(pcap_t *adhandle)
-{
-	gparam *gpara = (gparam *)lpParameter;
+DWORD WINAPI GetLivePC(LPVOID lpParameter) //(pcap_t *adhandle)
+		{
+	gparam *gpara = (gparam *) lpParameter;
 	pcap_t *adhandle = gpara->adhandle;
 	int res;
 	unsigned char Mac[6];
 	struct pcap_pkthdr * pkt_header;
 	const u_char * pkt_data;
-	while (true)
-	{
-		if (flag)
-		{
+
+	while (true) {
+		if (flag) {
 			printf("扫描完毕，按任意键退出!\n");
+			scanFinished = true;
 			break;
 		}
-		if ((res = pcap_next_ex(adhandle, &pkt_header, &pkt_data)) >= 0)
-		{
-			if (*(unsigned short *)(pkt_data + 12) == htons(ETH_ARP))
-			{
-				struct arp_packet *recv = (arp_packet *)pkt_data;
-				if (*(unsigned short *)(pkt_data + 20) == htons(ARP_REPLY))
-				{
+		if ((res = pcap_next_ex(adhandle, &pkt_header, &pkt_data)) >= 0) {
+			if (*(unsigned short *) (pkt_data + 12) == htons(ETH_ARP)) {
+				struct arp_packet *recv = (arp_packet *) pkt_data;
+				if (*(unsigned short *) (pkt_data + 20) == htons(ARP_REPLY)) {
 					printf("-------------------------------------------\n");
-					printf("IP地址:%d.%d.%d.%d   MAC地址:", recv->ah.source_ip_add & 255, recv->ah.source_ip_add >> 8 & 255, recv->ah.source_ip_add >> 16 & 255, recv->ah.source_ip_add >> 24 & 255);
-					for (int i = 0; i<6; i++)
-					{
-						Mac[i] = *(unsigned char *)(pkt_data + 22 + i);
+					Machines[countMachine].IP[0] = recv->ah.source_ip_add & 255;
+					Machines[countMachine].IP[1] = recv->ah.source_ip_add >> 8
+							& 255;
+					Machines[countMachine].IP[2] = recv->ah.source_ip_add >> 16
+							& 255;
+					Machines[countMachine].IP[3] = recv->ah.source_ip_add >> 24
+							& 255;
+					printf("序号：%d	IP地址:%d.%d.%d.%d   MAC地址:", countMachine,
+							recv->ah.source_ip_add & 255,
+							recv->ah.source_ip_add >> 8 & 255,
+							recv->ah.source_ip_add >> 16 & 255,
+							recv->ah.source_ip_add >> 24 & 255);
+					for (int i = 0; i < 6; i++) {
+						Mac[i] = *(unsigned char *) (pkt_data + 22 + i);
+						Machines[countMachine].Mac[i] = Mac[i];
+//					printf("%u",Machines[countMachine].Mac[i]);
 						printf("%02x", Mac[i]);
 					}
+					countMachine++;
 					printf("\n");
 				}
 			}
+
 		}
+
 		Sleep(10);
 	}
 	return 0;
+}
+void receiveMessage() {
+	/* 开始捕获 */
+	int ret;
+	struct pcap_pkthdr *header;
+	const u_char *pkt_data;
+
+	while ((ret = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0) {
+		if (ret == 0) {
+			/* 超时时间到 */
+			printf("time over!\n");
+			continue;
+		}
+		char buffer3[18];
+		if (header->len > 0) {
+			printf("len:[%d]n", header->len);
+//			//获取mac
+			rec_eth_head = (ethernet_head*) pkt_data;
+			for (int j = 0; j < 6; j++) {
+				char * temp = (char*) malloc(sizeof(char));
+				_itoa((int) (rec_eth_head->dest_mac_add[j]), temp, 16);
+				printf("%s  ", temp);
+			}
+			printf("DestMac:\n");
+//
+			//获取包中的ip
+			ip_header *ip = (ip_header *) (pkt_data + 14);
+			printf("daddr:[%u.%u.%u.%u]n", ip->daddr.byte1, ip->daddr.byte2,
+					ip->daddr.byte3, ip->daddr.byte4);
+
+			printf("saddr:[%u.%u.%u.%u]n", ip->saddr.byte1, ip->saddr.byte2,
+					ip->saddr.byte3, ip->saddr.byte4);
+
+			tcp_header *tcp = (tcp_header *) ((u_char*) ip
+					+ (ip->ver_ihl & 0xf) * 4);
+
+			char *data = (char*) ((char *) tcp + (tcp->hlen) * 4);
+			u_int datalen = ntohs(ip->tlen) - (ip->ver_ihl & 0xf) * 4
+					- (tcp->hlen) * 4;
+			printf("ipheader的长度%d\ntcp头的长度%d\n数据长度%d\n",
+					(ip->ver_ihl & 0xf) * 4, (tcp->hlen) * 4, datalen);
+			memcpy(buffer3, data, datalen);
+			printf("buffer:[%s]n", buffer3);
+
+		}
+	}
 }

@@ -6,17 +6,17 @@
 #include "tcp.h"
 
 
-#pragma pack(1)  //°´Ò»¸ö×Ö½ÚÄÚ´æ¶ÔÆë
+#pragma pack(1)  //æŒ‰ä¸€ä¸ªå­—èŠ‚å†…å­˜å¯¹é½
 #define IPTOSBUFFERS    12
-#define ETH_ARP         0x0806  //ÒÔÌ«ÍøÖ¡ÀàĞÍ±íÊ¾ºóÃæÊı¾İµÄÀàĞÍ£¬¶ÔÓÚARPÇëÇó»òÓ¦´ğÀ´Ëµ£¬¸Ã×Ö¶ÎµÄÖµÎªx0806
-#define ARP_HARDWARE    1  //Ó²¼şÀàĞÍ×Ö¶ÎÖµÎª±íÊ¾ÒÔÌ«ÍøµØÖ·
-#define ETH_IP          0x0800  //Ğ­ÒéÀàĞÍ×Ö¶Î±íÊ¾ÒªÓ³ÉäµÄĞ­ÒéµØÖ·ÀàĞÍÖµÎªx0800±íÊ¾IPµØÖ·
+#define ETH_ARP         0x0806  //ä»¥å¤ªç½‘å¸§ç±»å‹è¡¨ç¤ºåé¢æ•°æ®çš„ç±»å‹ï¼Œå¯¹äºARPè¯·æ±‚æˆ–åº”ç­”æ¥è¯´ï¼Œè¯¥å­—æ®µçš„å€¼ä¸ºx0806
+#define ARP_HARDWARE    1  //ç¡¬ä»¶ç±»å‹å­—æ®µå€¼ä¸ºè¡¨ç¤ºä»¥å¤ªç½‘åœ°å€
+#define ETH_IP          0x0800  //åè®®ç±»å‹å­—æ®µè¡¨ç¤ºè¦æ˜ å°„çš„åè®®åœ°å€ç±»å‹å€¼ä¸ºx0800è¡¨ç¤ºIPåœ°å€
 #define ARP_REQUEST     1
 #define ARP_REPLY       2
 #define HOSTNUM         255
-/* packet handler º¯ÊıÔ­ĞÍ*/
+/* packet handler å‡½æ•°åŸå‹*/
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
-// º¯ÊıÔ­ĞÍ
+// å‡½æ•°åŸå‹
 void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask);
 char *iptos(u_long in);
 char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen);
@@ -25,36 +25,36 @@ int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac);
 DWORD WINAPI SendArpPacket(LPVOID lpParameter);
 DWORD WINAPI GetLivePC(LPVOID lpParameter);
 
-//28×Ö½ÚARPÖ¡½á¹¹
+//28å­—èŠ‚ARPå¸§ç»“æ„
 struct arp_head
 {
-	unsigned short hardware_type;    //Ó²¼şÀàĞÍ
-	unsigned short protocol_type;    //Ğ­ÒéÀàĞÍ
-	unsigned char hardware_add_len; //Ó²¼şµØÖ·³¤¶È
-	unsigned char protocol_add_len; //Ğ­ÒéµØÖ·³¤¶È
-	unsigned short operation_field; //²Ù×÷×Ö¶Î
-	unsigned char source_mac_add[6]; //Ô´macµØÖ·
-	unsigned long source_ip_add;    //Ô´ipµØÖ·
-	unsigned char dest_mac_add[6]; //Ä¿µÄmacµØÖ·
-	unsigned long dest_ip_add;      //Ä¿µÄipµØÖ·
+	unsigned short hardware_type;    //ç¡¬ä»¶ç±»å‹
+	unsigned short protocol_type;    //åè®®ç±»å‹
+	unsigned char hardware_add_len; //ç¡¬ä»¶åœ°å€é•¿åº¦
+	unsigned char protocol_add_len; //åè®®åœ°å€é•¿åº¦
+	unsigned short operation_field; //æ“ä½œå­—æ®µ
+	unsigned char source_mac_add[6]; //æºmacåœ°å€
+	unsigned long source_ip_add;    //æºipåœ°å€
+	unsigned char dest_mac_add[6]; //ç›®çš„macåœ°å€
+	unsigned long dest_ip_add;      //ç›®çš„ipåœ°å€
 };
 
-//14×Ö½ÚÒÔÌ«ÍøÖ¡½á¹¹
+//14å­—èŠ‚ä»¥å¤ªç½‘å¸§ç»“æ„
 struct ethernet_head
 {
-	unsigned char dest_mac_add[6];    //Ä¿µÄmacµØÖ·
-	unsigned char source_mac_add[6]; //Ô´macµØÖ·
-	unsigned short type;              //Ö¡ÀàĞÍ
+	unsigned char dest_mac_add[6];    //ç›®çš„macåœ°å€
+	unsigned char source_mac_add[6]; //æºmacåœ°å€
+	unsigned short type;              //å¸§ç±»å‹
 };
-//arp×îÖÕ°ü½á¹¹
+//arpæœ€ç»ˆåŒ…ç»“æ„
 struct arp_packet
 {
 	struct ethernet_head ed;
 	struct arp_head ah;
 };
 
-////IPÊı¾İÍ·  
-//struct ip_header  //Ğ¡¶ËÄ£Ê½  
+////IPæ•°æ®å¤´  
+//struct ip_header  //å°ç«¯æ¨¡å¼  
 //{
 //	unsigned   char     ihl : 4;              //ip   header   length      
 //	unsigned   char     version : 4;          //version     
@@ -69,8 +69,8 @@ struct arp_packet
 //	u_int               daddr;              //destination   address     
 //};
 
-//tcpÊı¾İÍ·  
-struct tcp_header2 //Ğ¡¶ËÄ£Ê½  
+//tcpæ•°æ®å¤´  
+struct tcp_header2 //å°ç«¯æ¨¡å¼  
 {
 	u_short   source;
 	u_short   dest;
@@ -83,16 +83,16 @@ struct tcp_header2 //Ğ¡¶ËÄ£Ê½
 	u_short   urg_ptr;
 };
 
-//tcpºÍudp¼ÆËãĞ£ÑéºÍÊÇµÄÎ±Í·  
+//tcpå’Œudpè®¡ç®—æ ¡éªŒå’Œæ˜¯çš„ä¼ªå¤´  
 struct psd_header {
-	u_int32_t   sourceip;       //Ô´IPµØÖ·  
-	u_int32_t   destip;         //Ä¿µÄIPµØÖ·  
-	u_char      mbz;            //ÖÃ¿Õ(0)  
-	u_char      ptcl;           //Ğ­ÒéÀàĞÍ  
-	u_int16_t   plen;           //TCP/UDPÊı¾İ°üµÄ³¤¶È(¼´´ÓTCP/UDP±¨Í·ËãÆğµ½Êı¾İ°ü½áÊøµÄ³¤¶È µ¥Î»:×Ö½Ú)  
+	u_int32_t   sourceip;       //æºIPåœ°å€  
+	u_int32_t   destip;         //ç›®çš„IPåœ°å€  
+	u_char      mbz;            //ç½®ç©º(0)  
+	u_char      ptcl;           //åè®®ç±»å‹  
+	u_int16_t   plen;           //TCP/UDPæ•°æ®åŒ…çš„é•¿åº¦(å³ä»TCP/UDPæŠ¥å¤´ç®—èµ·åˆ°æ•°æ®åŒ…ç»“æŸçš„é•¿åº¦ å•ä½:å­—èŠ‚)  
 };
 
-/**ÒÔÌ«ÍøÊı¾İÍ· |  IPÊı¾İÍ· | TCPÊı¾İÍ· | Êı¾İ*/
+/**ä»¥å¤ªç½‘æ•°æ®å¤´ |  IPæ•°æ®å¤´ | TCPæ•°æ®å¤´ | æ•°æ®*/
 struct ethernet_packet{
 	struct ethernet_head eh;
 	struct ip_header iph;
@@ -187,32 +187,32 @@ int main()
 	HANDLE sendthread;
 	HANDLE recvthread;
 
-	ip_addr = (char *)malloc(sizeof(char) * 16);//ÉêÇëÄÚ´æ´æ·ÅIPµØÖ·
+	ip_addr = (char *)malloc(sizeof(char) * 16);//ç”³è¯·å†…å­˜å­˜æ”¾IPåœ°å€
 	if (ip_addr == NULL)
 	{
-		printf("ÉêÇëÄÚ´æ´æ·ÅIPµØÖ·Ê§°Ü!\n");
+		printf("ç”³è¯·å†…å­˜å­˜æ”¾IPåœ°å€å¤±è´¥!\n");
 		return -1;
 	}
-	ip_netmask = (char *)malloc(sizeof(char) * 16);//ÉêÇëÄÚ´æ´æ·ÅNETMASKµØÖ·
+	ip_netmask = (char *)malloc(sizeof(char) * 16);//ç”³è¯·å†…å­˜å­˜æ”¾NETMASKåœ°å€
 	if (ip_netmask == NULL)
 	{
-		printf("ÉêÇëÄÚ´æ´æ·ÅNETMASKµØÖ·Ê§°Ü!\n");
+		printf("ç”³è¯·å†…å­˜å­˜æ”¾NETMASKåœ°å€å¤±è´¥!\n");
 		return -1;
 	}
-	ip_mac = (unsigned char *)malloc(sizeof(unsigned char) * 6);//ÉêÇëÄÚ´æ´æ·ÅMACµØÖ·
+	ip_mac = (unsigned char *)malloc(sizeof(unsigned char) * 6);//ç”³è¯·å†…å­˜å­˜æ”¾MACåœ°å€
 	if (ip_mac == NULL)
 	{
-		printf("ÉêÇëÄÚ´æ´æ·ÅMACµØÖ·Ê§°Ü!\n");
+		printf("ç”³è¯·å†…å­˜å­˜æ”¾MACåœ°å€å¤±è´¥!\n");
 		return -1;
 	}
-	/* »ñÈ¡±¾»úÉè±¸ÁĞ±í*/
+	/* è·å–æœ¬æœºè®¾å¤‡åˆ—è¡¨*/
 	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
 	{
 		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
 		exit(1);
 	}
-	/* ´òÓ¡ÁĞ±í*/
-	printf("[±¾»úÍø¿¨ÁĞ±í£º]\n");
+	/* æ‰“å°åˆ—è¡¨*/
+	printf("[æœ¬æœºç½‘å¡åˆ—è¡¨ï¼š]\n");
 	for (d = alldevs; d; d = d->next)
 	{
 		printf("%d) %s\n", ++i, d->name);
@@ -223,39 +223,39 @@ int main()
 	}
 	if (i == 0)
 	{
-		printf("\nÕÒ²»µ½Íø¿¨£¡ÇëÈ·ÈÏÊÇ·ñÒÑ°²×°WinPcap.\n");
+		printf("\næ‰¾ä¸åˆ°ç½‘å¡ï¼è¯·ç¡®è®¤æ˜¯å¦å·²å®‰è£…WinPcap.\n");
 		return -1;
 	}
 	printf("\n");
-	printf("ÇëÑ¡ÔñÒª´ò¿ªµÄÍø¿¨ºÅ(1-%d):", i);
+	printf("è¯·é€‰æ‹©è¦æ‰“å¼€çš„ç½‘å¡å·(1-%d):", i);
 	scanf("%d", &inum);
 	if (inum < 1 || inum > i)
 	{
-		printf("\n¸ÃÍø¿¨ºÅ³¬¹ıÏÖÓĞÍø¿¨Êı!Çë°´ÈÎÒâ¼üÍË³ö¡­\n");
+		printf("\nè¯¥ç½‘å¡å·è¶…è¿‡ç°æœ‰ç½‘å¡æ•°!è¯·æŒ‰ä»»æ„é”®é€€å‡ºâ€¦\n");
 		getchar();
 		getchar();
-		/* ÊÍ·ÅÉè±¸ÁĞ±í*/
+		/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨*/
 		pcap_freealldevs(alldevs);
 		return -1;
 	}
-	/* Ìø×ªµ½Ñ¡ÖĞµÄÊÊÅäÆ÷*/
+	/* è·³è½¬åˆ°é€‰ä¸­çš„é€‚é…å™¨*/
 	for (d = alldevs, i = 0; i< inum - 1; d = d->next, i++);
-	/* ´ò¿ªÉè±¸*/
-	if ((adhandle = pcap_open(d->name,          // Éè±¸Ãû
-		65536,            // 65535±£Ö¤ÄÜ²¶»ñµ½²»Í¬Êı¾İÁ´Â·²ãÉÏµÄÃ¿¸öÊı¾İ°üµÄÈ«²¿ÄÚÈİ
-		PCAP_OPENFLAG_PROMISCUOUS,    // »ìÔÓÄ£Ê½
-		1000,             // ¶ÁÈ¡³¬Ê±Ê±¼ä
-		NULL,             // Ô¶³Ì»úÆ÷ÑéÖ¤
-		errbuf            // ´íÎó»º³å³Ø
+	/* æ‰“å¼€è®¾å¤‡*/
+	if ((adhandle = pcap_open(d->name,          // è®¾å¤‡å
+		65536,            // 65535ä¿è¯èƒ½æ•è·åˆ°ä¸åŒæ•°æ®é“¾è·¯å±‚ä¸Šçš„æ¯ä¸ªæ•°æ®åŒ…çš„å…¨éƒ¨å†…å®¹
+		PCAP_OPENFLAG_PROMISCUOUS,    // æ··æ‚æ¨¡å¼
+		1000,             // è¯»å–è¶…æ—¶æ—¶é—´
+		NULL,             // è¿œç¨‹æœºå™¨éªŒè¯
+		errbuf            // é”™è¯¯ç¼“å†²æ± 
 		)) == NULL)
 	{
-		fprintf(stderr, "\nÎŞ·¨¶ÁÈ¡¸ÃÊÊÅäÆ÷. ÊÊÅäÆ÷%s ²»±»WinPcapÖ§³Ö\n", d->name);
-		/* ÊÍ·ÅÉè±¸ÁĞ±í*/
+		fprintf(stderr, "\næ— æ³•è¯»å–è¯¥é€‚é…å™¨. é€‚é…å™¨%s ä¸è¢«WinPcapæ”¯æŒ\n", d->name);
+		/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨*/
 		pcap_freealldevs(alldevs);
 		return -1;
 	}
 
-	printf("\nlistening on Íø¿¨%d ...\n", inum);
+	printf("\nlistening on ç½‘å¡%d ...\n", inum);
 
 
 
@@ -265,55 +265,55 @@ int main()
 
 
 	u_int netmask;
-	char packet_filter[] = "tcp and (src host *.*.*.*)";//×Ô¼º¶¨ÒåipµØÖ·¼´¿É
+	char packet_filter[] = "tcp and (src host *.*.*.*)";//è‡ªå·±å®šä¹‰ipåœ°å€å³å¯
 	struct bpf_program fcode;
 
 
-	/* ¼ì²éÊı¾İÁ´Â·²ã£¬ÎªÁË¼òµ¥£¬ÎÒÃÇÖ»¿¼ÂÇÒÔÌ«Íø */
+	/* æ£€æŸ¥æ•°æ®é“¾è·¯å±‚ï¼Œä¸ºäº†ç®€å•ï¼Œæˆ‘ä»¬åªè€ƒè™‘ä»¥å¤ªç½‘ */
 	if (pcap_datalink(adhandle) != DLT_EN10MB)
 	{
 		fprintf(stderr, "nThis program works only on Ethernet networks.n");
-		/* ÊÍ·ÅÉè±¸ÁĞ±í */
+		/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨ */
 		pcap_freealldevs(alldevs);
 		return -1;
 	}
 	printf("datalink:[%d]n", pcap_datalink(adhandle));
 	if (d->addresses != NULL)
-		/* »ñµÃ½Ó¿ÚµÚÒ»¸öµØÖ·µÄÑÚÂë */
+		/* è·å¾—æ¥å£ç¬¬ä¸€ä¸ªåœ°å€çš„æ©ç  */
 		netmask = ((struct sockaddr_in *)(d->addresses->netmask))->sin_addr.S_un.S_addr;
 	else
-		/* Èç¹û½Ó¿ÚÃ»ÓĞµØÖ·£¬ÄÇÃ´ÎÒÃÇ¼ÙÉèÒ»¸öCÀàµÄÑÚÂë */
+		/* å¦‚æœæ¥å£æ²¡æœ‰åœ°å€ï¼Œé‚£ä¹ˆæˆ‘ä»¬å‡è®¾ä¸€ä¸ªCç±»çš„æ©ç  */
 		netmask = 0xffffff;
 
 
-	//±àÒë¹ıÂËÆ÷
+	//ç¼–è¯‘è¿‡æ»¤å™¨
 	if (pcap_compile(adhandle, &fcode, packet_filter, 1, netmask) <0)
 	{
 		fprintf(stderr, "nUnable to compile the packet filter. Check the syntax.n");
-		/* ÊÍ·ÅÉè±¸ÁĞ±í */
+		/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨ */
 		pcap_freealldevs(alldevs);
 		int x;
 		scanf("%d", &x);
 		return -1;
 	}
 
-	//ÉèÖÃ¹ıÂËÆ÷
+	//è®¾ç½®è¿‡æ»¤å™¨
 	if (pcap_setfilter(adhandle, &fcode)<0)
 	{
 		fprintf(stderr, "nError setting the filter.n");
-		/* ÊÍ·ÅÉè±¸ÁĞ±í */
+		/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨ */
 		pcap_freealldevs(alldevs);
 		return -1;
 	}
 
 	printf("nlistening on %s...n", d->description);
 
-	/* ÊÍ·ÅÉè±¸ÁĞ±í */
+	/* é‡Šæ”¾è®¾å¤‡åˆ—è¡¨ */
 	pcap_freealldevs(alldevs);
 
 
 
-	/* ¿ªÊ¼²¶»ñ */
+	/* å¼€å§‹æ•è· */
 	int ret;
 	struct pcap_pkthdr *header;
 	const u_char *pkt_data;
@@ -323,7 +323,7 @@ int main()
 	{
 		if (ret == 0)
 		{
-			/* ³¬Ê±Ê±¼äµ½ */
+			/* è¶…æ—¶æ—¶é—´åˆ° */
 			printf("time over!n");
 			continue;
 		}
@@ -346,7 +346,7 @@ int main()
 	}
 	return 0;
 }
-/* »ñÈ¡¿ÉÓÃĞÅÏ¢*/
+/* è·å–å¯ç”¨ä¿¡æ¯*/
 void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask)
 {
 	pcap_addr_t *a;
@@ -376,7 +376,7 @@ void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask)
 	}
 }
 
-/* ½«Êı×ÖÀàĞÍµÄIPµØÖ·×ª»»³É×Ö·û´®ÀàĞÍµÄ*/
+/* å°†æ•°å­—ç±»å‹çš„IPåœ°å€è½¬æ¢æˆå­—ç¬¦ä¸²ç±»å‹çš„*/
 char *iptos(u_long in)
 {
 	static char output[IPTOSBUFFERS][3 * 4 + 3 + 1];
@@ -405,20 +405,20 @@ char* ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
 		NI_NUMERICHOST) != 0) address = NULL;
 	return address;
 }
-/* »ñÈ¡×Ô¼ºÖ÷»úµÄMACµØÖ·
-¹ã²¥Ò»¸öarp°ü£¬Èç¹û½ÓÊÕµ½µÄ°üµÄÔ´ipÊÇ×Ô¼ºÉè¶¨µÄÄÇ¸ö£¬ ÄÇÃ´¾ÍÊÇ×Ô¼ºµÄ°ü£¬ÄÇÃ´£¬´ÓÕâ¸ö°üÀï¿ÉÒÔÕÒµ½×Ô¼ºµÄmac
+/* è·å–è‡ªå·±ä¸»æœºçš„MACåœ°å€
+å¹¿æ’­ä¸€ä¸ªarpåŒ…ï¼Œå¦‚æœæ¥æ”¶åˆ°çš„åŒ…çš„æºipæ˜¯è‡ªå·±è®¾å®šçš„é‚£ä¸ªï¼Œ é‚£ä¹ˆå°±æ˜¯è‡ªå·±çš„åŒ…ï¼Œé‚£ä¹ˆï¼Œä»è¿™ä¸ªåŒ…é‡Œå¯ä»¥æ‰¾åˆ°è‡ªå·±çš„mac
 
 */
 int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
 {
-	unsigned char sendbuf[42];//arp°ü½á¹¹´óĞ¡
+	unsigned char sendbuf[42];//arpåŒ…ç»“æ„å¤§å°
 	int i = -1;
 	int res;
 	struct ethernet_head eh;
 	struct arp_head ah;
 	struct pcap_pkthdr * pkt_header;
 	const u_char * pkt_data;
-	memset(eh.dest_mac_add, 0xff, 6);//Ä¿µÄµØÖ·ÎªÈ«Îª¹ã²¥µØÖ·
+	memset(eh.dest_mac_add, 0xff, 6);//ç›®çš„åœ°å€ä¸ºå…¨ä¸ºå¹¿æ’­åœ°å€
 	memset(eh.source_mac_add, 0x0f, 6);
 	memset(ah.source_mac_add, 0x0f, 6);
 	memset(ah.dest_mac_add, 0x00, 6);
@@ -427,7 +427,7 @@ int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
 	ah.protocol_type = htons(ETH_IP);
 	ah.hardware_add_len = 6;
 	ah.protocol_add_len = 4;
-	ah.source_ip_add = inet_addr("100.100.100.100"); //Ëæ±ãÉèµÄÇëÇó·½ip
+	ah.source_ip_add = inet_addr("100.100.100.100"); //éšä¾¿è®¾çš„è¯·æ±‚æ–¹ip
 	ah.operation_field = htons(ARP_REQUEST);
 	ah.dest_ip_add = inet_addr(ip_addr);
 
@@ -454,7 +454,7 @@ int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
 			{
 				ip_mac[i] = *(unsigned char *)(pkt_data + 22 + i);
 			}
-			printf("»ñÈ¡×Ô¼ºÖ÷»úµÄMACµØÖ·³É¹¦!\n");
+			printf("è·å–è‡ªå·±ä¸»æœºçš„MACåœ°å€æˆåŠŸ!\n");
 			break;
 		}
 	}
@@ -467,7 +467,7 @@ int GetSelfMac(pcap_t *adhandle, const char *ip_addr, unsigned char *ip_mac)
 		return 0;
 	}
 }
-/* Ïò¾ÖÓòÍøÄÚËùÓĞ¿ÉÄÜµÄIPµØÖ··¢ËÍARPÇëÇó°üÏß³Ì */
+/* å‘å±€åŸŸç½‘å†…æ‰€æœ‰å¯èƒ½çš„IPåœ°å€å‘é€ARPè¯·æ±‚åŒ…çº¿ç¨‹ */
 DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsigned char *mac,char *netmask)
 {
 	sparam *spara = (sparam *)lpParameter;
@@ -476,13 +476,13 @@ DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsig
 	unsigned char *mac = spara->mac;
 	char *netmask = spara->netmask;
 	printf("ip_mac:%02x-%02x-%02x-%02x-%02x-%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	printf("×ÔÉíµÄIPµØÖ·Îª:%s\n", ip);
-	printf("µØÖ·ÑÚÂëNETMASKÎª:%s\n", netmask);
+	printf("è‡ªèº«çš„IPåœ°å€ä¸º:%s\n", ip);
+	printf("åœ°å€æ©ç NETMASKä¸º:%s\n", netmask);
 	printf("\n");
-	unsigned char sendbuf[42];//arp°ü½á¹¹´óĞ¡
+	unsigned char sendbuf[42];//arpåŒ…ç»“æ„å¤§å°
 	struct ethernet_head eh;
 	struct arp_head ah;
-	memset(eh.dest_mac_add, 0xff, 6);//Ä¿µÄµØÖ·ÎªÈ«Îª¹ã²¥µØÖ·
+	memset(eh.dest_mac_add, 0xff, 6);//ç›®çš„åœ°å€ä¸ºå…¨ä¸ºå¹¿æ’­åœ°å€
 	memcpy(eh.source_mac_add, mac, 6);
 	memcpy(ah.source_mac_add, mac, 6);
 	memset(ah.dest_mac_add, 0x00, 6);
@@ -491,9 +491,9 @@ DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsig
 	ah.protocol_type = htons(ETH_IP);
 	ah.hardware_add_len = 6;
 	ah.protocol_add_len = 4;
-	ah.source_ip_add = inet_addr(ip); //ÇëÇó·½µÄIPµØÖ·Îª×ÔÉíµÄIPµØÖ·
+	ah.source_ip_add = inet_addr(ip); //è¯·æ±‚æ–¹çš„IPåœ°å€ä¸ºè‡ªèº«çš„IPåœ°å€
 	ah.operation_field = htons(ARP_REQUEST);
-	//Ïò¾ÖÓòÍøÄÚ¹ã²¥·¢ËÍarp°ü
+	//å‘å±€åŸŸç½‘å†…å¹¿æ’­å‘é€arpåŒ…
 	unsigned long myip = inet_addr(ip);
 	unsigned long mynetmask = inet_addr(netmask);
 	unsigned long hisip = htonl((myip&mynetmask));
@@ -517,7 +517,7 @@ DWORD WINAPI SendArpPacket(LPVOID lpParameter)//(pcap_t *adhandle,char *ip,unsig
 	flag = TRUE;
 	return 0;
 }
-/* ·ÖÎö½ØÁôµÄÊı¾İ°ü»ñÈ¡»î¶¯µÄÖ÷»úIPµØÖ· */
+/* åˆ†ææˆªç•™çš„æ•°æ®åŒ…è·å–æ´»åŠ¨çš„ä¸»æœºIPåœ°å€ */
 DWORD WINAPI GetLivePC(LPVOID lpParameter)//(pcap_t *adhandle)
 {
 	gparam *gpara = (gparam *)lpParameter;
@@ -530,7 +530,7 @@ DWORD WINAPI GetLivePC(LPVOID lpParameter)//(pcap_t *adhandle)
 	{
 		if (flag)
 		{
-			printf("É¨ÃèÍê±Ï£¬°´ÈÎÒâ¼üÍË³ö!\n");
+			printf("æ‰«æå®Œæ¯•ï¼ŒæŒ‰ä»»æ„é”®é€€å‡º!\n");
 			break;
 		}
 		if ((res = pcap_next_ex(adhandle, &pkt_header, &pkt_data)) >= 0)
@@ -541,7 +541,7 @@ DWORD WINAPI GetLivePC(LPVOID lpParameter)//(pcap_t *adhandle)
 				if (*(unsigned short *)(pkt_data + 20) == htons(ARP_REPLY))
 				{
 					printf("-------------------------------------------\n");
-					printf("IPµØÖ·:%d.%d.%d.%d   MACµØÖ·:", recv->ah.source_ip_add & 255, recv->ah.source_ip_add >> 8 & 255, recv->ah.source_ip_add >> 16 & 255, recv->ah.source_ip_add >> 24 & 255);
+					printf("IPåœ°å€:%d.%d.%d.%d   MACåœ°å€:", recv->ah.source_ip_add & 255, recv->ah.source_ip_add >> 8 & 255, recv->ah.source_ip_add >> 16 & 255, recv->ah.source_ip_add >> 24 & 255);
 					for (int i = 0; i<6; i++)
 					{
 						Mac[i] = *(unsigned char *)(pkt_data + 22 + i);
