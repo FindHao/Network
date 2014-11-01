@@ -106,7 +106,7 @@ int main() {
 	int i = 0;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	u_int netmask;
-	char packet_filter[] = "tcp and (src host 211.87.237.201)"; //自己定义ip地址即可
+	char packet_filter[] = "tcp and (src host 192.168.191.1)"; //自己定义ip地址即可
 	struct bpf_program fcode;
 
 	/* 获取本机设备列表 */

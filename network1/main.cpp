@@ -388,12 +388,12 @@ void sendHello() {
 
 	memset(&ethernet, 0, sizeof(ethernet));
 	BYTE destmac[8];
-	destmac[0] = 0x7c;
-	destmac[1] = 0xd1;
-	destmac[2] = 0xc3;
-	destmac[3] = 0x86;
-	destmac[4] = 0xf3;
-	destmac[5] = 0xae;
+	destmac[0] = 0x74;
+	destmac[1] = 0xe5;
+	destmac[2] = 0x0b;
+	destmac[3] = 0xf4;
+	destmac[4] = 0xbd;
+	destmac[5] = 0x07;
 //	for (int i = 0; i < 6; i++) {
 //		destmac[i] = Machines[sendIndex].Mac[i];
 //	}
@@ -424,7 +424,7 @@ void sendHello() {
 	ip.TTL = 128;
 	ip.Protocol = 6;
 	ip.Checksum = 0;
-	ip.SourceAddr = inet_addr("211.87.237.201");
+	ip.SourceAddr = inet_addr("192.168.191.1");
 	//char * temp1;
 	//temp1=(char*)malloc(sizeof(char*)*20);
 //	string iptemp;
@@ -437,7 +437,7 @@ void sendHello() {
 //	strcat(temp1,Machines[sendIndex].IP[i]+"");
 //	printf("temp1 ********%s\n",iptemp);
 //	ip.DestinationAddr=inet_addr(iptemp);
-	ip.DestinationAddr = inet_addr("211.87.237.200");
+	ip.DestinationAddr = inet_addr("192.168.191.1");
 	//¼ÓÈëipÍ·
 	memcpy(&SendBuffer[sizeof(struct EthernetHeader)], &ip, 20);
 	tcp.DstPort = htons(88);

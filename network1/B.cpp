@@ -149,7 +149,7 @@ int cMacIP;
 int i = 0;
 char errbuf[PCAP_ERRBUF_SIZE];
 u_int netmask;
-char packet_filter[] = "tcp and(ether dst 74-E5-0B-F4-BD-06)"; //自己定义ip地址即可
+char packet_filter[] = "tcp and(ether dst 74-E5-0B-F4-BD-07)"; //自己定义ip地址即可
 struct bpf_program fcode;
 int main() {
 	/* 获取本机设备列表 */

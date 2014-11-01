@@ -1,4 +1,4 @@
-﻿生成启动时间为 2014/10/28 星期二 18:57:24。
+﻿生成启动时间为 2014/11/1 星期六 8:38:27。
      1>项目“E:\Yun\Dropbox\cppcode\network1\network1\network1.vcxproj”在节点 2 上(Build 个目标)。
      1>ClCompile:
          E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D HAVE_REMOTE /D WPCAP /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt B.cpp
@@ -7,12 +7,12 @@
                  命令行参数: 参见前面的“HAVE_REMOTE”定义
      1>e:\yun\dropbox\cppcode\network1\network1\tcp.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
      1>e:\yun\dropbox\cppcode\network1\network1\b.cpp(481): warning C4101: “ip6str”: 未引用的局部变量
-     1>cl : 命令行 warning D9028: 最小重新生成失败，正在转换为标准生成
        Link:
          E:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.exe" /INCREMENTAL /NOLOGO wpcap.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"E:\Yun\Dropbox\cppcode\network1\Debug\network1.lib" /MACHINE:X86 Debug\B.obj
+         LINK : 没有找到 E:\Yun\Dropbox\cppcode\network1\Debug\network1.exe 或上一个增量链接没有生成它；正在执行完全链接
          network1.vcxproj -> E:\Yun\Dropbox\cppcode\network1\Debug\network1.exe
      1>已完成生成项目“E:\Yun\Dropbox\cppcode\network1\network1\network1.vcxproj”(Build 个目标)的操作。
 
 生成成功。
 
-已用时间 00:00:02.12
+已用时间 00:00:01.71
