@@ -295,8 +295,8 @@ void sendHello(){
 	ip.Protocol = 6;
 	ip.Checksum = 0;
 	//printf("sip:%s\ndip%s\n", sourIP, destIP);
-	ip.SourceAddr = inet_addr("211.87.237.200");
-	ip.DestinationAddr = inet_addr("211.87.237.201");
+	ip.SourceAddr = inet_addr("211.87.237.250");
+	ip.DestinationAddr = inet_addr("211.87.237.250");
 	memcpy(&SendBuffer[sizeof(struct ethernet_head)], &ip, 20);
 	tcp.DstPort = htons(88);
 	tcp.SrcPort = htons(1000);

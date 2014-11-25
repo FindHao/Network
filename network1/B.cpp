@@ -474,6 +474,8 @@ void sendHello() {
 	}
 
 	printf("\n\n************************\nSend to C message successfully!");
+	getchar();
+	getchar();
 }
 /* 获取可用信息*/
 void ifget(pcap_if_t *d, char *ip_addr, char *ip_netmask) {

@@ -1,0 +1,28 @@
+main。cpp-----------
+
+199行左右，char packet_filter[] = "tcp and (src host 211.87.237.250)"; 
+这个ip换成recive发送信息的source ip
+
+429行左右 	ip.SourceAddr = inet_addr("192.168.191.1");
+把sourceip换成你发送用的ip
+紧跟着的ip.DestinationAddr = inet_addr("211.87.237.250");换成目的ip
+
+receive。cpp----------------
+
+198行左右ip.SourceAddr = inet_addr("211.87.237.250");
+	这个ip要和main的过滤器的ip一致
+	
+109行左右，这个过滤器的ip要和main的发送数据里的源ip一致
+
+A.cpp-----------
+
+187行是数据，随便写
+
+335行左右destmac要写成你要发送的目的网卡的mac，这里要和B。cpp里面的过滤器对应起来
+374行左右的目的ip要修改，和B.cpp里面369行左右的手写过滤里面的ip对应起来
+
+B.cpp-----------
+152行的过滤器要和A里面发送数据的destmac对应起来
+369行的手写过滤ip要和a里面发送的目的ip对应起来
+393行开始的destmac要和发送的目的mac一致（自己ipconfig获得的），也就是c里面106行左右的过滤mac对应
+414行的sourceip随便写，destip要和c里面224行左右的手写过滤的ip对应起来

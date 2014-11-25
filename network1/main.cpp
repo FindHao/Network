@@ -196,7 +196,7 @@ int inum;
 int i = 0;
 char errbuf[PCAP_ERRBUF_SIZE];
 u_int netmask;
-char packet_filter[] = "tcp and (src host 211.87.237.200)"; //自己定义ip地址即可
+char packet_filter[] = "tcp and (src host 211.87.237.250)"; //自己定义ip地址即可
 struct bpf_program fcode;
 char *ip_addr;
 char *ip_netmask;
@@ -272,21 +272,23 @@ int main() {
 	sp.mac = ip_mac;
 	sp.netmask = ip_netmask;
 	gp.adhandle = adhandle;
-//	sendthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) SendArpPacket,
-//			&sp, 0, NULL);
-//	recvthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) GetLivePC, &gp,
-//			0, NULL);
+	// sendthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) SendArpPacket,
+	// 		&sp, 0, NULL);
+	// recvthread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) GetLivePC, &gp,
+	// 		0, NULL);
 	printf("\nlistening on 网卡%d ...\n", inum);
 
-//	while (!scanFinished) {
-//		Sleep(1000);
-//	}
+	// while (!scanFinished) {
+	// 	Sleep(1000);
+	// }
 
 
 	getchar();
 
-	scanf("输入您要发送信息的序号:%d\n", &sendIndex);
-
+	// printf("输入您要发送信息的序号:%d\n", &sendIndex);
+	printf("Sending\n" );
+	Sleep(1000);
+	sendIndex=1;
 	sendHello();
 
 	Result = pcap_sendpacket(adhandle, SendBuffer,
@@ -393,7 +395,7 @@ void sendHello() {
 	destmac[2] = 0x0b;
 	destmac[3] = 0xf4;
 	destmac[4] = 0xbd;
-	destmac[5] = 0x07;
+	destmac[5] = 0x06;
 //	for (int i = 0; i < 6; i++) {
 //		destmac[i] = Machines[sendIndex].Mac[i];
 //	}
@@ -437,7 +439,7 @@ void sendHello() {
 //	strcat(temp1,Machines[sendIndex].IP[i]+"");
 //	printf("temp1 ********%s\n",iptemp);
 //	ip.DestinationAddr=inet_addr(iptemp);
-	ip.DestinationAddr = inet_addr("192.168.191.1");
+	ip.DestinationAddr = inet_addr("211.87.237.250");
 	//加入ip头
 	memcpy(&SendBuffer[sizeof(struct EthernetHeader)], &ip, 20);
 	tcp.DstPort = htons(88);
